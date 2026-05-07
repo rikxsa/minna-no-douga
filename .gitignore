@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Worker
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+
+# Local secrets (never commit)
+.local-secrets.txt
+.local-secrets.*
+*.secret

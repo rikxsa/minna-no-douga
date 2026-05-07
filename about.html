@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>みんなの動画について</title>
+    <link rel="icon" type="image/webp" href="icon.webp" />
+    <link rel="apple-touch-icon" href="icon.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+Antique:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme") || "light";
+          document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      :root,
+      [data-theme="light"] {
+        color-scheme: light;
+        --bg-base: #fafbfd;
+        --aurora-1: rgba(255, 30, 60, 0.45);
+        --aurora-2: rgba(255, 130, 150, 0.35);
+        --aurora-3: rgba(255, 220, 230, 0.55);
+        --text: #2c2f37;
+        --text-strong: #15171c;
+        --muted: #6b7180;
+        --muted-2: #a4a8b3;
+        --panel: rgba(255, 255, 255, 0.65);
+        --panel-border: rgba(255, 255, 255, 0.7);
+        --panel-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.95) inset,
+          0 6px 18px rgba(40, 30, 60, 0.05);
+        --hairline: rgba(40, 30, 60, 0.08);
+        --accent: #ff2d44;
+      }
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg-base: #0c0e14;
+        --aurora-1: rgba(255, 255, 255, 0.13);
+        --aurora-2: rgba(220, 220, 240, 0.10);
+        --aurora-3: rgba(180, 195, 230, 0.09);
+        --text: #d8dae0;
+        --text-strong: #f4f5f8;
+        --muted: #9097a3;
+        --muted-2: #5f6573;
+        --panel: rgba(28, 30, 38, 0.55);
+        --panel-border: rgba(255, 255, 255, 0.08);
+        --panel-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.07) inset,
+          0 6px 20px rgba(0, 0, 0, 0.32);
+        --hairline: rgba(255, 255, 255, 0.06);
+        --accent: #ff5a6e;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--bg-base); }
+      html, body {
+        margin: 0;
+        color: var(--text);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont,
+          "Hiragino Sans", "Noto Sans JP", "Zen Kaku Gothic Antique",
+          system-ui, sans-serif;
+        font-feature-settings: "palt" 1;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.85;
+        min-height: 100%;
+        overflow-x: hidden;
+      }
+      body { background: transparent; }
+
+      .bg-aurora {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .aurora {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+      }
+      .aurora-a {
+        width: 70vmax; height: 70vmax;
+        top: -20vmax; left: -20vmax;
+        background: radial-gradient(circle at 40% 40%, var(--aurora-1) 0%, transparent 60%);
+        animation: aA 38s ease-in-out infinite alternate;
+      }
+      .aurora-b {
+        width: 60vmax; height: 60vmax;
+        bottom: -20vmax; right: -15vmax;
+        background: radial-gradient(circle at 60% 60%, var(--aurora-2) 0%, transparent 60%);
+        animation: aB 44s ease-in-out infinite alternate;
+      }
+      .aurora-c {
+        width: 80vmax; height: 80vmax;
+        top: 20%; left: 30%;
+        background: radial-gradient(circle at 50% 50%, var(--aurora-3) 0%, transparent 50%);
+        animation: aC 52s ease-in-out infinite alternate;
+      }
+      @keyframes aA { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(10vmax,8vmax) scale(1.1); } }
+      @keyframes aB { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-8vmax,-5vmax) scale(1.05); } }
+      @keyframes aC { 0% { transform: translate(0,0) scale(0.95); } 100% { transform: translate(-12vmax,5vmax) scale(1.05); } }
+
+      a { color: inherit; }
+
+      .wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 64px 28px 96px;
+        padding-top: max(64px, env(safe-area-inset-top));
+        padding-bottom: max(96px, env(safe-area-inset-bottom));
+        position: relative;
+        z-index: 1;
+      }
+      .back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        margin-bottom: 32px;
+        transition: color 220ms cubic-bezier(0.16,1,0.3,1);
+      }
+      .back:hover { color: var(--text-strong); }
+
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+        margin: 0 0 14px;
+      }
+      h1 {
+        font-weight: 700;
+        font-size: clamp(28px, 4.5vw, 36px);
+        letter-spacing: -0.005em;
+        margin: 0 0 18px;
+        color: var(--text-strong);
+        line-height: 1.25;
+      }
+      .lede {
+        color: var(--text);
+        font-size: 16px;
+        margin: 0 0 56px;
+        line-height: 1.85;
+      }
+      h2 {
+        font-weight: 700;
+        font-size: 18px;
+        margin: 48px 0 12px;
+        color: var(--text-strong);
+        letter-spacing: 0;
+      }
+      p { margin: 0 0 16px; font-size: 14.5px; color: var(--text); line-height: 1.85; }
+      .muted { color: var(--muted); }
+
+      .panel {
+        background: var(--panel);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid var(--panel-border);
+        border-radius: 22px;
+        padding: 22px 26px;
+        margin: 20px 0;
+        box-shadow: var(--panel-shadow);
+      }
+      .panel p:last-child { margin-bottom: 0; }
+
+      .diagram {
+        background: var(--panel);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        backdrop-filter: blur(28px) saturate(180%);
+        border: 1px solid var(--panel-border);
+        border-radius: 22px;
+        padding: 28px 26px;
+        margin: 28px 0;
+        box-shadow: var(--panel-shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .diagram-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 13.5px;
+      }
+      .diagram-row.center { justify-content: center; gap: 8px; }
+      .diagram-avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FF8484, #FF3950);
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0;
+      }
+      .diagram-avatar.b { background: linear-gradient(135deg, #84B5FF, #3B82F6); }
+      .diagram-avatar.c { background: linear-gradient(135deg, #FFD580, #FFA94D); }
+      .diagram-text { color: var(--text); }
+      .diagram-text strong { color: var(--text-strong); }
+      .diagram-arrow {
+        color: var(--muted-2);
+        font-size: 18px;
+        text-align: center;
+        line-height: 0.8;
+        font-weight: 300;
+      }
+      .diagram-block {
+        text-align: center;
+        padding: 16px 18px;
+        background: rgba(255, 45, 68, 0.06);
+        border: 1px dashed rgba(255, 45, 68, 0.35);
+        border-radius: 14px;
+        color: var(--text-strong);
+        font-weight: 600;
+        font-size: 13.5px;
+      }
+
+      ul { margin: 6px 0 16px; padding-left: 22px; }
+      li { margin: 8px 0; font-size: 14.5px; line-height: 1.8; }
+
+      hr {
+        border: 0;
+        height: 1px;
+        background: var(--hairline);
+        margin: 56px 0;
+      }
+
+      .footer-note {
+        margin-top: 64px;
+        font-size: 12px;
+        color: var(--muted-2);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-aurora" aria-hidden="true">
+      <span class="aurora aurora-a"></span>
+      <span class="aurora aurora-b"></span>
+      <span class="aurora aurora-c"></span>
+    </div>
+
+    <div class="wrap">
+      <a class="back" href="index.html">← もどる</a>
+
+      <p class="eyebrow">概要</p>
+      <h1>みんなの動画について</h1>
+      <p class="lede">
+        親しい少人数のグループのために設計された、
+        YouTube のお気に入り動画を共有するためのプライベートタイムラインです。
+      </p>
+
+      <h2>このサービスでできること</h2>
+      <p>
+        参加者がそれぞれ YouTube で「高評価」を付けた動画を、
+        毎日自動的に取得してひとつのタイムラインにまとめます。
+        動画の URL を個別に共有する必要はなく、
+        いつも通り YouTube を視聴して気に入った動画に高評価を付けるだけで、
+        翌日にはグループのフィードに反映されます。
+      </p>
+
+      <h2>共有のしくみ</h2>
+      <div class="diagram" aria-hidden="true">
+        <div class="diagram-row">
+          <span class="diagram-avatar">A</span>
+          <span class="diagram-text">参加者 A が YouTube で動画を <strong>高評価</strong></span>
+        </div>
+        <div class="diagram-row">
+          <span class="diagram-avatar b">B</span>
+          <span class="diagram-text">参加者 B も別の動画を <strong>高評価</strong></span>
+        </div>
+        <div class="diagram-row">
+          <span class="diagram-avatar c">C</span>
+          <span class="diagram-text">参加者 C は通常通り YouTube を視聴</span>
+        </div>
+        <div class="diagram-arrow">↓</div>
+        <div class="diagram-block">毎日 1 回、自動で集約してタイムラインに反映</div>
+        <div class="diagram-arrow">↓</div>
+        <div class="diagram-row center">
+          <span class="diagram-text"><strong>「いま、グループは何を見ているのか」</strong> をひと目で把握できる場所になります。</span>
+        </div>
+      </div>
+
+      <h2>タイムラインの構成</h2>
+      <p>
+        新しい高評価から順に並びます。
+        スクロールするだけで、グループ内で最近共有された動画を一覧で確認できます。
+        フォロワー数や公開いいね数といった一般的な SNS の評価指標は持たず、
+        小さな閉じたグループ向けに最適化されています。
+      </p>
+
+      <h2>名前の表示について</h2>
+      <p>
+        初回サインイン時に、参加方法を選択していただきます。
+        この設定はあとからアカウント設定でいつでも変更可能です。
+      </p>
+      <ul>
+        <li>
+          <strong>オープンモード</strong> ―
+          ご自身が高評価した動画にあなたの名前が表示されます。
+          代わりに、他の参加者の動画についても誰が高評価したかを確認できます。
+        </li>
+        <li>
+          <strong>匿名モード</strong> ―
+          高評価した動画はタイムラインに反映されますが、誰が押したかは表示されません。
+          他の参加者の動画についても、誰が高評価したかは表示されません。
+        </li>
+      </ul>
+
+      <h2>表示名とアイコン</h2>
+      <p>
+        アカウント設定から、表示名 (4 文字以内) とアバターアイコンを変更できます。
+        漢字・ひらがな・カタカナ・英字をご利用いただけます。
+      </p>
+
+      <h2>機能の概要</h2>
+      <ul>
+        <li><strong>検索</strong> ― タイトルやチャンネル名から動画を絞り込めます。</li>
+        <li><strong>フィルター</strong> ― 参加者ごとにタイムラインを切り替えられます。</li>
+        <li><strong>並び替え</strong> ― 新着順と人気順 (高評価人数順) の 2 種類。</li>
+        <li><strong>ランダム再生</strong> ― 表示中の動画から 1 本をランダムに選んで再生します。</li>
+        <li><strong>リアクション</strong> ― 各動画に絵文字で軽い反応を残せます。</li>
+        <li><strong>今日の埋もれた一本</strong> ― まだ視聴していない過去の動画を 1 本紹介します。</li>
+        <li><strong>通知</strong> ― ご自身のアクセス権が切れる前にブラウザ通知でお知らせします (オプトイン)。</li>
+      </ul>
+
+      <h2>取り扱う情報</h2>
+      <p>本サービス上で表示・保存される情報は以下に限られます。</p>
+      <ul>
+        <li>動画タイトル</li>
+        <li>チャンネル名</li>
+        <li>サムネイル画像</li>
+        <li>誰が高評価したかの情報 (オープンモードを選択した方のみ)</li>
+      </ul>
+      <p>
+        視聴履歴・メールアドレス・Google アカウントの個人情報は保存されません。
+        サイト URL は検索エンジンのインデックスから除外する設定になっており、
+        合言葉を知っている方のみアクセスできます。
+      </p>
+
+      <h2>参加の終了について</h2>
+      <p>
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>
+        にアクセスし、本サービスのアクセス権を取り消してください。
+        翌日以降の取得は自動的に停止されます。
+        管理者にもご連絡いただければ、参加者リストからの削除を行います。
+      </p>
+
+      <p class="footer-note">少人数のための、静かな共有スペース。</p>
+    </div>
+  </body>
+</html>

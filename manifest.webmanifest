@@ -1,0 +1,33 @@
+{
+  "name": "みんなの動画",
+  "short_name": "みんなの動画",
+  "description": "仲のいい数人だけのYouTubeタイムライン",
+  "start_url": ".",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#fafbfd",
+  "theme_color": "#ff2d44",
+  "categories": ["entertainment", "social"],
+  "lang": "ja",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icon.webp", "sizes": "192x192", "type": "image/webp", "purpose": "any" },
+    { "src": "icon.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any" },
+    { "src": "icon.webp", "sizes": "192x192", "type": "image/webp", "purpose": "maskable" },
+    { "src": "icon.webp", "sizes": "512x512", "type": "image/webp", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "ランダム再生",
+      "short_name": "ランダム",
+      "description": "ランダムに動画を1本再生する",
+      "url": "./?action=random",
+      "icons": [
+        { "src": "icon.webp", "sizes": "192x192", "type": "image/webp" }
+      ]
+    }
+  ]
+}

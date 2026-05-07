@@ -1,0 +1,18 @@
+{
+  "name": "friend-likes-renew",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "tweetnacl": "^1.0.3",
+    "@noble/hashes": "^1.4.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}

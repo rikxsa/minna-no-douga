@@ -1,0 +1,39 @@
+name = "friend-likes-renew"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Daily reminder at 09:00 UTC = 18:00 JST
+[triggers]
+crons = ["0 9 * * *"]
+
+[vars]
+GITHUB_REPO     = "owner/friend-likes"
+GITHUB_BRANCH   = "main"
+GITHUB_WORKFLOW = "update.yml"
+SITE_ORIGIN     = "https://owner.github.io/friend-likes"
+WORKER_ORIGIN   = "https://friend-likes-renew.<your-subdomain>.workers.dev"
+VAPID_SUBJECT   = "mailto:admin@example.com"
+
+# id (lowercase) -> Google account email
+USER_EMAIL_MAP = """
+{
+  "riki@gmail.com": "riki",
+  "yuji@gmail.com": "yuji"
+}
+"""
+
+# Mirror of data/users.json so the Worker can render display names.
+USERS_JSON = """
+[
+  { "id": "riki", "name": "Riki" },
+  { "id": "yuji", "name": "Yuji" }
+]
+"""
+
+# Secrets (set via `wrangler secret put <name>`):
+#   GOOGLE_CLIENT_ID
+#   GOOGLE_CLIENT_SECRET
+#   GITHUB_TOKEN          fine-grained PAT (Actions/Secrets/Contents/Workflows write)
+#   COOKIE_SECRET         any long random string (e.g. `openssl rand -hex 32`)
+#   VAPID_PUBLIC_KEY      generate with `npx web-push generate-vapid-keys` (publicKey, base64url)
+#   VAPID_PRIVATE_KEY     same command (privateKey, base64url)
