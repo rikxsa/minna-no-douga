@@ -1,4 +1,8 @@
 {
-  "users": {},
-  "updatedAt": null
+  "users": {
+    "riki": {
+      "tokenIssuedAt": "2026-05-07T15:35:54Z"
+    }
+  },
+  "updatedAt": "2026-05-07T15:35:55Z"
 }
