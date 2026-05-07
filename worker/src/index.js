@@ -80,7 +80,13 @@ function cors(origin) {
 
 async function handleMe(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const headers = { ...cors(origin), "Content-Type": "application/json" };
+  // Allow browsers to cache identity for 30s to reduce repeated /me roundtrips.
+  // Cookie still validates each request after cache expiry.
+  const headers = {
+    ...cors(origin),
+    "Content-Type": "application/json",
+    "Cache-Control": "private, max-age=30",
+  };
   const session = await verifyToken(readCookie(request, COOKIE_NAME), env);
   if (!session) {
     return new Response(JSON.stringify({ signedIn: false }), { status: 200, headers });

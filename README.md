@@ -320,6 +320,34 @@ sign in again.
 
 ---
 
+## Free-tier safety design
+
+By default, this site is engineered to stay **well inside free quotas indefinitely**.
+The actual usage on a 5–10 friend group is ~1–2 % of every cap.
+
+| Resource | Free quota | Our daily usage | Headroom |
+|---|---|---|---|
+| Cloudflare Workers requests | 100,000 / day | ~500 (typical) | 200× |
+| YouTube Data API quota | 10,000 units / day | ~100 (10 users × 10 pages) | 100× |
+| GitHub Pages bandwidth | 100 GB / month | ~200 MB | 500× |
+| GitHub Pages storage | 1 GB | ~1 MB | 1000× |
+| GitHub Actions minutes | unlimited (public repo) | ~30s × cron + manual | n/a |
+| Cloudflare KV operations | 100k / day | 0 (we don't use KV) | n/a |
+
+### Hard caps coded in to prevent runaway costs
+
+- **`scripts/fetch_youtube.py`**:
+  - `MAX_PAGES=10` — max 500 likes fetched per user per run (env-overridable)
+  - `QUOTA_BUDGET=2000` — total run-wide YouTube units, well under 10k limit. Once exhausted, remaining users are skipped (their videos persist from prior runs)
+- **Worker `/me` response**: `Cache-Control: private, max-age=30s` to reduce repeat requests
+- **Service Worker** caches static assets indefinitely → repeat visits = ~0 GitHub bandwidth
+- **Daily cron** (1/day max) — push reminder Worker invocations bounded at most 1/day per user
+
+If you want to scale up:
+- Add friends ≤ 100 (Google OAuth Testing limit) — still free
+- Bump `MAX_PAGES` → 20 if friends like a LOT (still free quota-wise)
+- For 50+ users, raise `QUOTA_BUDGET` to 5000
+
 ## API quota and rate limits
 
 - **YouTube Data API daily quota: 10,000 units** by default.

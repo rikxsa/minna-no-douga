@@ -29,9 +29,16 @@ VIDEOS_PATH = DATA_DIR / "videos.json"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 LIKED_URL = "https://www.googleapis.com/youtube/v3/videos"
 
-# 20 pages * 50 results = 1000 videos cap per user. Plenty for a friend group.
-MAX_PAGES = int(os.environ.get("MAX_PAGES", "20"))
+# Safety caps to stay inside YouTube Data API free quota (10,000 units/day).
+#   Each videos.list?myRating=like call costs 1 unit, returns 50 videos.
+#   With 10 pages × 10 users = 100 units/day — 1% of the free quota.
+#   Override via env if you have a much larger group AND have raised quota.
+MAX_PAGES = int(os.environ.get("MAX_PAGES", "10"))
 PAGE_SIZE = 50
+
+# Hard ceiling on total API calls per workflow run. Will skip remaining
+# users gracefully once exceeded (their videos stay from previous runs).
+QUOTA_BUDGET = int(os.environ.get("QUOTA_BUDGET", "2000"))
 
 
 def env_required(name: str) -> str:
@@ -61,13 +68,20 @@ def refresh_access_token(client_id: str, client_secret: str, refresh_token: str)
     return resp.json()["access_token"]
 
 
-def fetch_user_likes(access_token: str) -> list[dict]:
-    """Return liked videos (most-recent first), paginated up to MAX_PAGES."""
+def fetch_user_likes(access_token: str, quota_remaining: list[int]) -> list[dict]:
+    """Return liked videos (most-recent first), paginated up to MAX_PAGES.
+
+    quota_remaining is a single-element list (mutable counter) so callers can
+    track total API calls across the run and bail early when budget is spent.
+    """
     items: list[dict] = []
     page_token: str | None = None
     headers = {"Authorization": f"Bearer {access_token}"}
 
     for _ in range(MAX_PAGES):
+        if quota_remaining[0] <= 0:
+            print(f"warn: quota budget exhausted; truncating fetch", file=sys.stderr)
+            break
         params = {
             "part": "snippet,contentDetails,statistics",
             "myRating": "like",
@@ -77,6 +91,7 @@ def fetch_user_likes(access_token: str) -> list[dict]:
             params["pageToken"] = page_token
 
         resp = requests.get(LIKED_URL, headers=headers, params=params, timeout=30)
+        quota_remaining[0] -= 1  # videos.list with myRating costs 1 unit
         if not resp.ok:
             raise RuntimeError(
                 f"videos.list failed ({resp.status_code}): {resp.text[:300]}"
@@ -148,6 +163,11 @@ def main() -> int:
     valid_user_ids = {u["id"] for u in users}
     merged: dict[str, dict] = {vid: dict(rec) for vid, rec in load_existing().items()}
 
+    # Quota counter — shared across all users this run.
+    # Stays well within the YouTube Data API free tier (10,000 units/day).
+    quota_remaining = [QUOTA_BUDGET]
+    print(f"info: quota budget for this run: {QUOTA_BUDGET} units")
+
     # 1) Fetch each user's current likes. Track who succeeded so we only
     #    apply removals for users whose data is fresh.
     user_likes: dict[str, list[dict]] = {}
@@ -160,12 +180,15 @@ def main() -> int:
         if not refresh_token:
             print(f"skip: {uid}: env {token_var} is not set", file=sys.stderr)
             continue
+        if quota_remaining[0] <= 0:
+            print(f"skip: {uid}: quota budget exhausted", file=sys.stderr)
+            continue
 
         try:
             access_token = refresh_access_token(
                 client_id, client_secret, refresh_token
             )
-            items = fetch_user_likes(access_token)
+            items = fetch_user_likes(access_token, quota_remaining)
         except Exception as e:
             # Most common: refresh token expired (testing-mode 7-day expiry).
             print(f"error: {uid}: {e}", file=sys.stderr)
@@ -173,7 +196,7 @@ def main() -> int:
 
         user_likes[uid] = items
         successful.add(uid)
-        print(f"ok: {uid}: {len(items)} liked videos fetched")
+        print(f"ok: {uid}: {len(items)} liked videos fetched (quota left: {quota_remaining[0]})")
 
     # 2) Drop unknown users from any existing likedBy lists (in case
     #    someone left and was removed from users.json).
