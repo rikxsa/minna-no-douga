@@ -1,4 +1,4 @@
-name = "friend-likes-renew"
+name = "minna-no-douga-renew"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 
@@ -7,26 +7,25 @@ compatibility_date = "2024-12-01"
 crons = ["0 9 * * *"]
 
 [vars]
-GITHUB_REPO     = "owner/friend-likes"
+GITHUB_REPO     = "rikxsa/minna-no-douga"
 GITHUB_BRANCH   = "main"
 GITHUB_WORKFLOW = "update.yml"
-SITE_ORIGIN     = "https://owner.github.io/friend-likes"
-WORKER_ORIGIN   = "https://friend-likes-renew.<your-subdomain>.workers.dev"
-VAPID_SUBJECT   = "mailto:admin@example.com"
+SITE_ORIGIN     = "https://rikxsa.github.io/minna-no-douga"
+WORKER_ORIGIN   = "https://minna-no-douga-renew.rikxsa.workers.dev"
+VAPID_SUBJECT   = "mailto:sakuramaru908@gmail.com"
 
 # id (lowercase) -> Google account email
+# あとで友人を追加するときはここに行を追加して再デプロイ。
 USER_EMAIL_MAP = """
 {
-  "riki@gmail.com": "riki",
-  "yuji@gmail.com": "yuji"
+  "sakuramaru908@gmail.com": "riki"
 }
 """
 
 # Mirror of data/users.json so the Worker can render display names.
 USERS_JSON = """
 [
-  { "id": "riki", "name": "Riki" },
-  { "id": "yuji", "name": "Yuji" }
+  { "id": "riki", "name": "リキ" }
 ]
 """
 

@@ -37,7 +37,6 @@ jobs:
           # (upper-cased). Add a line when a friend joins; delete it
           # when they leave.
           USER_RIKI_REFRESH_TOKEN: ${{ secrets.USER_RIKI_REFRESH_TOKEN }}
-          USER_YUJI_REFRESH_TOKEN: ${{ secrets.USER_YUJI_REFRESH_TOKEN }}
         run: python scripts/fetch_youtube.py
 
       - name: Commit and push if changed
