@@ -184,6 +184,16 @@
         <div class="inline-player hidden" id="inlinePlayer" aria-hidden="true">
           <div class="ip-frame">
             <div id="ipPlayer"></div>
+            <div class="seek-zones" data-target="inline" aria-hidden="true">
+              <div class="seek-zone seek-zone-left" data-side="left"></div>
+              <div class="seek-zone seek-zone-right" data-side="right"></div>
+            </div>
+            <div class="seek-pulse seek-pulse-left hidden">
+              <span>−10秒</span>
+            </div>
+            <div class="seek-pulse seek-pulse-right hidden">
+              <span>+10秒</span>
+            </div>
           </div>
           <div class="ip-bar">
             <div class="ip-meta" id="ipMeta"></div>
@@ -343,7 +353,14 @@
             <span class="toggle-thumb"></span>
           </span>
         </button>
-        <div class="sheet-options" id="channelSheetOptions" style="margin-top:12px"></div>
+        <div class="sheet-search">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/>
+          </svg>
+          <input type="search" id="channelSearchInput" placeholder="チャンネルを検索"
+            autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+        </div>
+        <div class="sheet-options" id="channelSheetOptions"></div>
       </div>
     </div>
 
@@ -460,6 +477,16 @@
         <div class="rmodal-content" id="rmContent">
           <div class="rm-frame">
             <div id="rmPlayer"></div>
+            <div class="seek-zones" data-target="modal" aria-hidden="true">
+              <div class="seek-zone seek-zone-left" data-side="left"></div>
+              <div class="seek-zone seek-zone-right" data-side="right"></div>
+            </div>
+            <div class="seek-pulse seek-pulse-left hidden">
+              <span>−10秒</span>
+            </div>
+            <div class="seek-pulse seek-pulse-right hidden">
+              <span>+10秒</span>
+            </div>
           </div>
           <div class="rm-meta">
             <p class="rm-eyebrow hidden" id="rmEyebrow">きょうの一本</p>

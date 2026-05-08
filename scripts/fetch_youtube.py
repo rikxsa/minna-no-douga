@@ -40,6 +40,30 @@ PAGE_SIZE = 50
 # users gracefully once exceeded (their videos stay from previous runs).
 QUOTA_BUDGET = int(os.environ.get("QUOTA_BUDGET", "2000"))
 
+# Filter out YouTube Shorts (vertical short-form videos).
+# Heuristic: any video <= 60 seconds. Override via env if you want them.
+EXCLUDE_SHORTS = os.environ.get("EXCLUDE_SHORTS", "1").lower() in ("1", "true", "yes")
+SHORTS_MAX_SECONDS = int(os.environ.get("SHORTS_MAX_SECONDS", "60"))
+
+
+def _iso8601_to_seconds(iso: str) -> int:
+    """PT1M30S → 90, PT45S → 45, PT1H2M3S → 3723, "" → 0."""
+    if not iso:
+        return 0
+    import re
+    m = re.match(r"^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$", iso)
+    if not m:
+        return 0
+    h = int(m.group(1) or 0)
+    mn = int(m.group(2) or 0)
+    s = int(m.group(3) or 0)
+    return h * 3600 + mn * 60 + s
+
+
+def _is_shorts(item: dict) -> bool:
+    duration = (item.get("contentDetails", {}) or {}).get("duration", "")
+    return _iso8601_to_seconds(duration) <= SHORTS_MAX_SECONDS
+
 
 def env_required(name: str) -> str:
     val = os.environ.get(name)
@@ -194,9 +218,18 @@ def main() -> int:
             print(f"error: {uid}: {e}", file=sys.stderr)
             continue
 
+        before = len(items)
+        if EXCLUDE_SHORTS:
+            items = [it for it in items if not _is_shorts(it)]
+        skipped = before - len(items)
+
         user_likes[uid] = items
         successful.add(uid)
-        print(f"ok: {uid}: {len(items)} liked videos fetched (quota left: {quota_remaining[0]})")
+        print(
+            f"ok: {uid}: {len(items)} liked videos fetched"
+            + (f" (Shorts skipped: {skipped})" if skipped else "")
+            + f" (quota left: {quota_remaining[0]})"
+        )
 
     # 2) Drop unknown users from any existing likedBy lists (in case
     #    someone left and was removed from users.json).

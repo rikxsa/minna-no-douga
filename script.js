@@ -304,7 +304,7 @@ const state = {
   me: null,
   filter: "all",       // "all" | "<userId>" | "channel:<name>"
   minorOnly: false,
-  sort: "recent",      // visual order on initial load is random (recent fallback)
+  sort: "latest",      // newest likedAt first by default
   search: "",
   selectedIndex: -1,
   randomOrder: null,
@@ -1696,6 +1696,81 @@ async function inlineFullscreen() {
   } catch (e) { console.warn("fullscreen:", e); }
 }
 
+// ---------- Player seek + transport controls ----------
+
+function playerIsOpen() {
+  return playerState.yt &&
+    (!els.rmRoot.classList.contains("hidden") ||
+     !els.inlinePlayer.classList.contains("hidden"));
+}
+
+async function seekRel(deltaSeconds) {
+  if (!playerState.yt) return;
+  try {
+    const t = await Promise.resolve(playerState.yt.getCurrentTime());
+    const target = Math.max(0, t + deltaSeconds);
+    playerState.yt.seekTo(target, true);
+    showSeekPulse(deltaSeconds);
+  } catch (e) { console.warn("seek:", e); }
+}
+
+function togglePlayPause() {
+  if (!playerState.yt) return;
+  try {
+    const s = playerState.yt.getPlayerState();
+    // 1=playing, 2=paused, 0=ended, others=buffering/cued
+    if (s === 1) playerState.yt.pauseVideo();
+    else playerState.yt.playVideo();
+  } catch (e) { console.warn("toggle play/pause:", e); }
+}
+
+function showSeekPulse(deltaSeconds) {
+  const isInline = playerState.kind === "inline";
+  const root = isInline
+    ? els.inlinePlayer.querySelector(".ip-frame")
+    : els.rmRoot.querySelector(".rm-frame");
+  if (!root) return;
+  const side = deltaSeconds < 0 ? "left" : "right";
+  const pulse = root.querySelector(`.seek-pulse-${side}`);
+  if (!pulse) return;
+  pulse.querySelector("span").textContent =
+    (deltaSeconds < 0 ? "−" : "+") + Math.abs(deltaSeconds) + "秒";
+  pulse.classList.remove("hidden", "show");
+  // Re-trigger animation
+  void pulse.offsetWidth;
+  pulse.classList.add("show");
+  setTimeout(() => pulse.classList.remove("show"), 700);
+}
+
+// ---------- Touch zones (mobile double-tap seek) ----------
+
+function bindSeekZones() {
+  document.querySelectorAll(".seek-zone").forEach((zone) => {
+    let lastTapTime = 0;
+    let pendingTap = null;
+    zone.addEventListener("click", (e) => {
+      if (!playerState.yt) return;
+      const now = Date.now();
+      const side = zone.dataset.side;
+      if (now - lastTapTime < 300) {
+        // Double tap → seek
+        if (pendingTap) { clearTimeout(pendingTap); pendingTap = null; }
+        e.preventDefault();
+        seekRel(side === "left" ? -10 : +10);
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+        // Single tap with delay → toggle play/pause
+        if (pendingTap) clearTimeout(pendingTap);
+        pendingTap = setTimeout(() => {
+          togglePlayPause();
+          pendingTap = null;
+        }, 300);
+      }
+    });
+  });
+}
+
 // ---------- toast ----------
 
 let toastTimer = null;
@@ -1760,6 +1835,9 @@ function bindStaticHandlers() {
     }
   });
   if (els.ipCloseBtn) els.ipCloseBtn.addEventListener("click", destroyPlayer);
+
+  // Mobile double-tap seek + single-tap play/pause overlays
+  bindSeekZones();
 
   // Mobile bottom nav
   if (els.mobTimelineBtn) els.mobTimelineBtn.addEventListener("click", () => {
@@ -1849,6 +1927,18 @@ function bindStaticHandlers() {
   if (channelBackdrop) channelBackdrop.addEventListener("click", closeChannelSheet);
   const minorRowBtn = document.getElementById("minorRowBtn");
   if (minorRowBtn) minorRowBtn.addEventListener("click", toggleMinorOnly);
+  const channelSearchInput = document.getElementById("channelSearchInput");
+  if (channelSearchInput) {
+    const onSearch = debounce(renderChannelSheet, 80);
+    channelSearchInput.addEventListener("input", onSearch);
+    channelSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        channelSearchInput.value = "";
+        renderChannelSheet();
+      }
+    });
+  }
   if (els.pushBtn) els.pushBtn.addEventListener("click", togglePush);
 
   // Name editor
@@ -1884,13 +1974,15 @@ function bindStaticHandlers() {
     if (e.key === "Escape" && channelRoot && !channelRoot.classList.contains("hidden")) {
       e.preventDefault(); closeChannelSheet(); return;
     }
-    // Player (modal or inline) Esc
-    if (
-      e.key === "Escape" &&
-      (!els.rmRoot.classList.contains("hidden") ||
-       !els.inlinePlayer.classList.contains("hidden"))
-    ) {
-      e.preventDefault(); destroyPlayer(); return;
+    // Player (modal or inline) keyboard transport — YouTube-style J / K / L
+    if (playerIsOpen() && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+      if (e.key === "Escape") { e.preventDefault(); destroyPlayer(); return; }
+      if (e.key === "l" || e.key === "L") { e.preventDefault(); seekRel(+10); return; }
+      if (e.key === "j" || e.key === "J") { e.preventDefault(); seekRel(-10); return; }
+      if (e.key === "k" || e.key === "K") { e.preventDefault(); togglePlayPause(); return; }
+      if (e.key === " ")                  { e.preventDefault(); togglePlayPause(); return; }
+      if (e.key === "ArrowRight") { e.preventDefault(); seekRel(+5); return; }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); seekRel(-5); return; }
     }
     // Main modal Esc
     if (e.key === "Escape" && modalCfg?.skip) { closeModal(); return; }
@@ -2077,6 +2169,8 @@ async function tryPassword() {
 // ---------- Channel sheet ----------
 
 function openChannelSheet() {
+  const searchInput = document.getElementById("channelSearchInput");
+  if (searchInput) searchInput.value = "";
   renderChannelSheet();
   const root = document.getElementById("channelSheetRoot");
   root.classList.remove("hidden");
@@ -2086,16 +2180,12 @@ function closeChannelSheet() {
 }
 
 function renderChannelSheet() {
-  // Aggregate channels (only counts videos that pass disclose visibility for likers)
-  const counts = new Map();
-  for (const v of state.videos) {
-    const ch = v.channel;
-    if (!ch) continue;
-    counts.set(ch, (counts.get(ch) || 0) + 1);
-  }
-  const sorted = Array.from(counts.entries()).sort((a, b) =>
-    b[1] - a[1] || a[0].localeCompare(b[0], "ja")
-  );
+  const sorted = aggregateChannels();
+  const searchInput = document.getElementById("channelSearchInput");
+  const query = (searchInput?.value || "").trim().toLowerCase();
+  const filtered = query
+    ? sorted.filter(([name]) => name.toLowerCase().includes(query))
+    : sorted;
 
   const container = document.getElementById("channelSheetOptions");
   container.innerHTML = "";
@@ -2119,7 +2209,7 @@ function renderChannelSheet() {
   });
   container.appendChild(all);
 
-  for (const [name, count] of sorted) {
+  for (const [name, count] of filtered) {
     const filterId = "channel:" + name;
     const row = document.createElement("button");
     row.type = "button";
@@ -2230,11 +2320,12 @@ function renderFilterSheet() {
     els.filterSheetOptions.appendChild(opt);
   }
 
-  // Section: チャンネル別
+  // Section: チャンネル別 (top 5 + "all" link to dedicated sheet with search)
   const channelEntries = aggregateChannels();
   if (channelEntries.length > 0) {
-    appendSheetHeader(els.filterSheetOptions, "チャンネル別");
-    for (const [name, count] of channelEntries) {
+    appendSheetHeader(els.filterSheetOptions, `チャンネル別 (${channelEntries.length})`);
+    const showInline = Math.min(5, channelEntries.length);
+    for (const [name, count] of channelEntries.slice(0, showInline)) {
       const opt = makeSheetOption({
         id: "channel:" + name,
         label: name,
@@ -2246,6 +2337,23 @@ function renderFilterSheet() {
           '<path d="M8 3l4 3 4-3"/></svg>',
       });
       els.filterSheetOptions.appendChild(opt);
+    }
+    if (channelEntries.length > showInline) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "sheet-option sheet-option-more";
+      more.innerHTML =
+        '<span class="sheet-option-icon">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+        '<circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9l3 3-3 3"/></svg></span>' +
+        '<span class="sheet-option-label">すべてのチャンネルを見る</span>' +
+        '<span class="sheet-row-aux">' + channelEntries.length + '</span>';
+      more.addEventListener("click", () => {
+        closeFilterSheet();
+        setTimeout(openChannelSheet, 200);
+      });
+      els.filterSheetOptions.appendChild(more);
     }
   }
 }
